@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script
+            src="http://code.jquery.com/jquery-3.3.1.js"
+            integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+            crossorigin="anonymous"></script>
+</head>
+<body>
+    <div>
+        <div>ID</div>
+        <input id="user-id">
+    </div>
+    <div>
+        <div>PassWord</div>
+        <input id="user-pw" type="password">
+    </div>
+    <div>
+        <button onclick="onLoginClick()">로그인</button>
+        <button onclick="onJoinClick()">회원가입</button>
+    </div>
+
+    <div style="display: flex;">
+        <div style="width: 100px;">ID </div>
+        <div id="user-id-div"></div>
+    </div>
+    <div style="display: flex;">
+        <div style="width: 100px;">Password </div>
+        <div id="user-pw-div"></div>
+    </div>
+    <div style="display: flex;">
+        <div style="width: 100px;">Username </div>
+        <div id="user-name-div"></div>
+    </div>
+    <div style="display: flex;">
+        <div style="width: 100px;">Email </div>
+        <div id="user-email-div"></div>
+    </div>
+    <div>
+        <button onclick="editUserInfo(this)">수정</button>
+        <button onclick="removeUser(this)">삭제</button>
+    </div>
+
+    <script>
+        async function onLoginClick(){
+            try{
+                let response = await $.get('/GetUser/' + $('#user-id').val());
+
+                if(response.id == $('#user-id').val() && response.password == $('#user-pw').val())
+                {
+                    $('#user-id-div').html(response.id);
+                    $('#user-pw-div').html(response.password);
+                    $('#user-name-div').html(response.username);
+                    $('#user-email-div').html(response.email);
+                    alert("로그인에 성공했습니다.");
+                } else
+                    alert("로그인에 실패했습니다. 비밀번호가 틀렸을 수 있습니다.");
+
+                $('#user-id').val("");
+                $('#user-pw').val("");
+            }catch (err) {
+                alert("에러가 발생했습니다.");
+                console.log(err);
+            }
+        }
+
+        async function onJoinClick(){
+
+            let Data = {
+                id: $('#user-id').val(),
+                password: $('#user-pw').val(),
+                username: "임준혁",
+                email: "aaa@dgsw.hs.kr"
+            };
+
+            try{
+                let response = await $.ajax({
+                    type: 'POST',
+                    url: '/JoinUser',
+                    contentType: 'application/json',
+                    data: JSON.stringify(Data)
+                });
+
+                if(response == true)
+                    alert("회원가입에 성공했습니다.");
+                else
+                    alert("회원가입에 실패했습니다. 이미 있는 회원일 수 있습니다.")
+            } catch (err){
+                alert("오류가 발생했습니다.");
+                console.log(err);
+            }
+        }
+
+        async function editUserInfo(button) {
+            if($(button).text() == '수정'){
+
+                let userPw = $('#user-pw-div').html();
+                let userName = $('#user-name-div').html();
+                let email = $('#user-email-div').html();
+
+                let inputContent = `<input value="${userPw}">`;
+                $('#user-pw-div').html(inputContent);
+                inputContent = `<input value="${userName}">`;
+                $('#user-name-div').html(inputContent);
+                inputContent = `<input value="${email}">`;
+                $('#user-email-div').html(inputContent);
+
+                $(button).text('확인');
+                $(button).next().text('취소');
+            } else {
+
+                let updateContent = {
+                    id: $('#user-id-div').html(),
+                    password: $('#user-pw-div').children().val(),
+                    username: $('#user-name-div').children().val(),
+                    email: $('#user-email-div').children().val()
+                }
+
+                let response = await $.ajax({
+                    type: 'PUT',
+                    url: '/UpdateUser/' + $('#user-id-div').html(),
+                    contentType: 'application/json',
+                    data: JSON.stringify(updateContent)
+                });
+
+                $('#user-pw-div').html(response.password);
+                $('#user-name-div').html(response.username);
+                $('#user-email-div').html(response.email);
+
+                $(button).text('수정');
+                $(button).next().text('삭제');
+            }
+        }
+
+        async function removeUser(button){
+            if($(button).text() == '삭제'){
+
+                try{
+                    let response = await $.ajax({
+                        type: 'DELETE',
+                        url: '/RemoveUser/' + $('#user-id-div').html(),
+                        contentType: 'application/json'
+                    });
+
+                    if(response == true){
+                        alert("삭제에 성공했습니다.");
+
+                        $('#user-id-div').html("");
+                        $('#user-pw-div').html("");
+                        $('#user-name-div').html("");
+                        $('#user-email-div').html("");
+                    } else
+                        alert("삭제에 실패했습니다.");
+                } catch(err) {
+                    alert("에러가 발생했습니다.");
+                    console.log(err);
+                }
+            } else {
+                $('#user-pw-div').html($('#user-pw-div').children().val());
+                $('#user-name-div').html($('#user-name-div').children().val());
+                $('#user-email-div').html($('#user-email-div').children().val());
+
+                $(button).prev().text('수정');
+                $(button).text('삭제');
+            }
+        }
+
+    </script>
+</body>
+</html>
